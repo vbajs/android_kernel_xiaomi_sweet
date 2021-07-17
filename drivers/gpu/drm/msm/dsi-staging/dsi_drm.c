@@ -46,9 +46,6 @@ static struct dsi_display_mode_priv_info default_priv_info = {
 	.dsc_enabled = false,
 };
 
-struct dsi_bridge *gbridge;
-static struct delayed_work prim_panel_work;
-static atomic_t prim_panel_is_on;
 static struct wakeup_source prim_panel_wakelock;
 
 static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
@@ -225,8 +222,9 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 
 	atomic_set(&c_bridge->display->panel->esd_recovery_pending, 0);
 
-	if (c_bridge->display->is_prim_display && atomic_read(&prim_panel_is_on)) {
-		cancel_delayed_work_sync(&prim_panel_work);
+	if (c_bridge->display->is_prim_display &&
+		atomic_read(&c_bridge->display_active)) {
+		cancel_delayed_work_sync(&c_bridge->pd_work);
 		__pm_relax(&prim_panel_wakelock);
 		if (c_bridge->display->panel->panel_mode == DSI_OP_VIDEO_MODE) {
 			pr_debug("skip set display config for video panel in fpc\n");
@@ -277,8 +275,9 @@ static void dsi_bridge_pre_enable(struct drm_bridge *bridge)
 	if (rc)
 		pr_err("Continuous splash pipeline cleanup failed, rc=%d\n",
 									rc);
+
 	if (c_bridge->display->is_prim_display)
-		atomic_set(&prim_panel_is_on, true);
+		atomic_set(&c_bridge->display_active, true);
 }
 
 int panel_disp_param_send(struct dsi_display *display, int cmd);
@@ -509,21 +508,21 @@ static void dsi_bridge_post_disable(struct drm_bridge *bridge)
 	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &notify_data);
 
 	if (c_bridge->display->is_prim_display)
-		atomic_set(&prim_panel_is_on, false);
-
-	msm_drm_notifier_call_chain(MSM_DRM_EVENT_BLANK, &notify_data);
+		atomic_set(&c_bridge->display_active, false);
 }
 
-static void prim_panel_off_delayed_work(struct work_struct *work)
+static void dsi_bridge_post_disable_work(struct work_struct *work)
 {
-	mutex_lock(&gbridge->base.lock);
-	if (atomic_read(&prim_panel_is_on)) {
-		dsi_bridge_post_disable(&gbridge->base);
-		__pm_relax(&prim_panel_wakelock);
-		mutex_unlock(&gbridge->base.lock);
+	struct delayed_work *pd_work = to_delayed_work(work);
+	struct dsi_bridge *bridge = container_of(pd_work, struct dsi_bridge, pd_work);
+
+	if (!bridge)
 		return;
+
+	if (atomic_read(&bridge->display_active)) {
+		dsi_bridge_post_disable(&bridge->base);
+		__pm_relax(&prim_panel_wakelock);
 	}
-	mutex_unlock(&gbridge->base.lock);
 }
 
 static void dsi_bridge_mode_set(struct drm_bridge *bridge,
@@ -1272,12 +1271,11 @@ struct dsi_bridge *dsi_drm_bridge_init(struct dsi_display *display,
 	mutex_init(&encoder->bridge->lock);
 
 	if (display->is_prim_display) {
-		gbridge = bridge;
 		atomic_set(&resume_pending, 0);
 		wakeup_source_init(&prim_panel_wakelock, "prim_panel_wakelock");
-		atomic_set(&prim_panel_is_on, false);
+		atomic_set(&bridge->display_active, false);
 		init_waitqueue_head(&resume_wait_q);
-		INIT_DELAYED_WORK(&prim_panel_work, prim_panel_off_delayed_work);
+		INIT_DELAYED_WORK(&bridge->pd_work, dsi_bridge_post_disable_work);
 	}
 
 	return bridge;
@@ -1292,9 +1290,9 @@ void dsi_drm_bridge_cleanup(struct dsi_bridge *bridge)
 	if (bridge && bridge->base.encoder)
 		bridge->base.encoder->bridge = NULL;
 
-	if (bridge == gbridge) {
-		atomic_set(&prim_panel_is_on, false);
-		cancel_delayed_work_sync(&prim_panel_work);
+	if (bridge) {
+		atomic_set(&bridge->display_active, false);
+		cancel_delayed_work_sync(&bridge->pd_work);
 		wakeup_source_trash(&prim_panel_wakelock);
 	}
 
