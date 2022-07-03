@@ -53,7 +53,6 @@ static struct wakeup_source prim_panel_wakelock;
 
 struct msm_drm_notifier g_notify_data;
 
-
 static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 				struct dsi_display_mode *dsi_mode)
 {
