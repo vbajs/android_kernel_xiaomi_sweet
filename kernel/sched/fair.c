@@ -10435,6 +10435,7 @@ static inline void update_sd_lb_stats(struct lb_env *env, struct sd_lb_stats *sd
 		if (local_group) {
 			sds->local = sg;
 			sgs = local;
+			update_group_capacity(env->sd, env->dst_cpu);
 		}
 
 		update_sg_lb_stats(env, sg, load_idx, local_group, sgs,
@@ -11599,9 +11600,7 @@ static int idle_balance(struct rq *this_rq, struct rq_flags *rf)
 		u64 t0, domain_cost;
 
 		if (!(sd->flags & SD_LOAD_BALANCE)) {
-			if (time_after_eq(jiffies,
-					  sd->groups->sgc->next_update))
-				update_group_capacity(sd, this_cpu);
+			update_group_capacity(sd, this_cpu);
 			continue;
 		}
 
@@ -12015,9 +12014,7 @@ static void rebalance_domains(struct rq *rq, enum cpu_idle_type idle)
 			continue;
 
 		if (!(sd->flags & SD_LOAD_BALANCE)) {
-			if (time_after_eq(jiffies,
-					  sd->groups->sgc->next_update))
-				update_group_capacity(sd, cpu);
+			update_group_capacity(sd, cpu);
 			continue;
 		}
 
