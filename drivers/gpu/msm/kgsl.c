@@ -5033,6 +5033,8 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 	device->pwrctrl.interrupt_num =
 		platform_get_irq_byname(device->pdev, device->pwrctrl.irq_name);
 
+	unsigned long irqflags = IRQF_TRIGGER_HIGH;
+
 	if (device->pwrctrl.interrupt_num <= 0) {
 		KGSL_DRV_ERR(device, "platform_get_irq_byname failed: %d\n",
 					 device->pwrctrl.interrupt_num);
@@ -5040,9 +5042,12 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 		goto error_pwrctrl_close;
 	}
 
+	if (!strcmp(device->name, "kgsl_3d0_irq"))
+		irqflags |= IRQF_PERF_AFFINE;
+
 	status = devm_request_irq(device->dev, device->pwrctrl.interrupt_num,
 				  kgsl_irq_handler,
-				  IRQF_TRIGGER_HIGH,
+				  irqflags,
 				  device->name, device);
 	if (status) {
 		KGSL_DRV_ERR(device, "request_irq(%d) failed: %d\n",
@@ -5266,7 +5271,8 @@ static int __init kgsl_core_init(void)
 
 	kthread_init_worker(&kgsl_driver.worker);
 
-	kgsl_driver.worker_thread = kthread_run(kthread_worker_fn, &kgsl_driver.worker, "kgsl_worker_thread");
+	kgsl_driver.worker_thread = kthread_run_perf_critical(cpu_perf_mask,
+                kthread_worker_fn, &kgsl_driver.worker, "kgsl_worker_thread");
 
 	if (IS_ERR(kgsl_driver.worker_thread)) {
 		pr_err("unable to start kgsl thread\n");
