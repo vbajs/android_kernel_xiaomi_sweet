@@ -17,7 +17,7 @@ if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
     exit 1
 fi
 
-ZIPNAME="STRIX-${DEVICE}-personal-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="STRIX-${DEVICE}-revival-$(date '+%Y%m%d-%H%M').zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=vbajs
