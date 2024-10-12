@@ -17,12 +17,12 @@ if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
     exit 1
 fi
 
-ZIPNAME="${DEVICE}-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="STRIX-${DEVICE}-personal-$(date '+%Y%m%d-%H%M').zip"
 
 export ARCH=arm64
-export KBUILD_BUILD_USER=aryan
-export KBUILD_BUILD_HOST=celeste
-export PATH="/home/celeste/aryan/linux-x86/clang-r510928/bin/:$PATH"
+export KBUILD_BUILD_USER=vbajs
+export KBUILD_BUILD_HOST=lhohq
+export PATH="/home/vbajs/toolchains/zyc-clang/20.0.0git-20241001-release/bin/:$PATH"
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
 	rm -rf out
@@ -30,7 +30,7 @@ if [[ $1 = "-c" || $1 = "--clean" ]]; then
 fi
 
 echo -e "\nStarting compilation for $DEVICE...\n"
-make O=out ARCH=arm64 ${DEVICE}_defconfig
+make O=out ARCH=arm64 vendor/${DEVICE}_defconfig
 make -j$(nproc) \
     O=out \
     ARCH=arm64 \
@@ -53,7 +53,7 @@ echo -e "\nKernel compiled successfully! Zipping up...\n"
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone -q https://github.com/basamaryan/AnyKernel3 -b master AnyKernel3; then
+	if ! git clone --depth=1 https://github.com/fiqri19102002/AnyKernel3.git -b sweet AnyKernel3; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
@@ -72,10 +72,3 @@ cd ..
 rm -rf AnyKernel3
 echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
 echo "Zip: $ZIPNAME"
-
-if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
-   head=$(git rev-parse --verify HEAD 2>/dev/null); then
-	HASH="$(echo $head | cut -c1-8)"
-fi
-
-telegram -f $ZIPNAME -M "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
