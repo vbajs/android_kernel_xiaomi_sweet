@@ -17,7 +17,7 @@ if [[ ! " ${ALLOWED_CODENAMES[@]} " =~ " ${DEVICE} " ]]; then
     exit 1
 fi
 
-ZIPNAME="STRIX-${DEVICE}-revival-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="ksu-STRIX-${DEVICE}-revival-$(date '+%Y%m%d-%H%M').zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=vbajs
@@ -57,7 +57,7 @@ else
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
- fi
+fi
 
 # Modify anykernel.sh to replace device names
 sed -i "s/device\.name1=.*/device.name1=${DEVICE}/" AnyKernel3/anykernel.sh
