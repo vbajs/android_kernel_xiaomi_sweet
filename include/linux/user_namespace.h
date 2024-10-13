@@ -67,6 +67,10 @@ struct user_namespace {
 #endif
 	struct ucounts		*ucounts;
 	int ucount_max[UCOUNT_COUNTS];
+#ifdef CONFIG_KSU_SUSFS
+	u64 android_kabi_reserved1;
+	u64 android_kabi_reserved2;
+#endif
 } __randomize_layout;
 
 struct ucounts {

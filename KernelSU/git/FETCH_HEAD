@@ -1,0 +1,10 @@
+2da7022a1e480dce1279e91c9eb85ddd733b9f1f		branch 'main' of https://github.com/tiann/KernelSU
+01fe801ea7665b335c3dff9d42e8d21b30cf3174	not-for-merge	branch 'add-device-1992' of https://github.com/tiann/KernelSU
+f7af2054e182642d91f9df1ad46e2005f6264c4c	not-for-merge	branch 'dependabot/cargo/userspace/ksud/crates-266db3d6f5' of https://github.com/tiann/KernelSU
+f32f1a00db2366196d0c30dcbfdb8175e2332220	not-for-merge	branch 'dependabot/gradle/manager/maven-f3d2dafe43' of https://github.com/tiann/KernelSU
+490cd3f554c44e9907fbf474ac1af090a8e20612	not-for-merge	branch 'dependabot/npm_and_yarn/website/npm-e653d24eef' of https://github.com/tiann/KernelSU
+94d2ade4ef65f34314aa981f032ad8e167a80438	not-for-merge	branch 'gh-pages' of https://github.com/tiann/KernelSU
+5180e4add49a3652d4e8181a0dc7324d27ff58e1	not-for-merge	branch 'ksepol' of https://github.com/tiann/KernelSU
+e23f15aeb641732c76fb2cadbd81d9d2452994b7	not-for-merge	branch 'ksufs' of https://github.com/tiann/KernelSU
+2a6267ce1a06091f55fd30206c9bc7e329ef31db	not-for-merge	branch 'multi-module-impl' of https://github.com/tiann/KernelSU
+0aab2a71c3594f75ba0185ee29a4f937b91442cc	not-for-merge	branch 'translation' of https://github.com/tiann/KernelSU
