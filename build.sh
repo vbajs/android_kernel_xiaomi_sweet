@@ -53,7 +53,7 @@ echo -e "\nKernel compiled successfully! Zipping up...\n"
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone --depth=1 https://github.com/fiqri19102002/AnyKernel3.git -b sweet AnyKernel3; then
+	if ! git clone -q --depth=1 https://github.com/vbajs/AnyKernel3.git -b fiqri AnyKernel3; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
@@ -64,7 +64,7 @@ sed -i "s/device\.name1=.*/device.name1=${DEVICE}/" AnyKernel3/anykernel.sh
 sed -i "s/device\.name2=.*/device.name2=${DEVICE}in/" AnyKernel3/anykernel.sh
 
 cp $kernel AnyKernel3
-cp $dtbo AnyKernel3
+cp $dtbo AnyKernel3/dtbo/oss
 cp $dtb AnyKernel3
 cd AnyKernel3
 zip -r9 "../$ZIPNAME" * -x .git
