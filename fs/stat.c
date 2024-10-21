@@ -32,6 +32,24 @@
  */
 void generic_fillattr(struct inode *inode, struct kstat *stat)
 {
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	if (unlikely(inode->i_state & 67108864)) {
+		stat->dev = inode->android_kabi_reserved2;
+		stat->ino = inode->android_kabi_reserved1;
+		stat->mode = inode->i_mode;
+		stat->nlink = inode->i_sb->android_kabi_reserved1;
+		stat->uid = inode->i_uid;
+		stat->gid = inode->i_gid;
+		stat->rdev = inode->i_rdev;
+		stat->size = inode->i_sb->android_kabi_reserved2;
+		stat->atime = inode->i_atime;
+		stat->mtime = inode->i_mtime;
+		stat->ctime = inode->i_ctime;
+		stat->blksize = i_blocksize(inode);
+		stat->blocks = inode->i_sb->android_kabi_reserved3;
+		return;
+	}
+#endif
 	stat->dev = inode->i_sb->s_dev;
 	stat->ino = inode->i_ino;
 	stat->mode = inode->i_mode;
@@ -148,6 +166,10 @@ int vfs_statx_fd(unsigned int fd, struct kstat *stat,
 }
 EXPORT_SYMBOL(vfs_statx_fd);
 
+#ifdef CONFIG_KSU
+extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
+#endif
+
 /**
  * vfs_statx - Get basic and extra attributes by filename
  * @dfd: A file descriptor representing the base dir for a relative filename
@@ -174,6 +196,9 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
 		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
 		return -EINVAL;
 
+   #ifdef CONFIG_KSU
+	ksu_handle_stat(&dfd, &filename, &flags);
+#endif
 	if (flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
 	if (flags & AT_NO_AUTOMOUNT)
