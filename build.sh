@@ -21,7 +21,7 @@ ZIPNAME="STRIX-${DEVICE}-revival-$(date '+%Y%m%d-%H%M').zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=vbajs
-export KBUILD_BUILD_HOST=lhohq
+export KBUILD_BUILD_HOST=tbyool
 export PATH="/home/vbajs/toolchains/zyc-clang/20.0.0git-20241001-release/bin/:$PATH"
 
 if [[ $1 = "-c" || $1 = "--clean" ]]; then
