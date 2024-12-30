@@ -138,7 +138,7 @@ miuidtbo="out/arch/arm64/boot/miui/dtbo.img"
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b fiqri AnyKernel3; then
+	if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b exp-fiqri AnyKernel3; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
@@ -148,9 +148,6 @@ fi
 sed -i "s/device\.name1=.*/device.name1=sweet/" AnyKernel3/anykernel.sh
 sed -i "s/device\.name2=.*/device.name2=sweetin/" AnyKernel3/anykernel.sh
 
-cd AnyKernel3
-git reset --hard a74cbbf53f97245f6441663cfa0bc58db39aee53
-cd ..
 cp $kernel AnyKernel3
 cp $ossdtbo AnyKernel3/dtbo/oss
 cp $miuidtbo AnyKernel3/dtbo/miui
