@@ -2036,6 +2036,7 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command",
 	"qcom,mdss-dsi-dispparam-120hz-dc-crc-setting-command",
 	"qcom,mdss-dsi-dispparam-bc-120hz-command",
+	"qcom,mdss-dsi-dispparam-bc-90hz-command",
 	"qcom,mdss-dsi-dispparam-bc-60hz-command",
 	"qcom,mdss-dsi-doze-hbm-command",
 	"qcom,mdss-dsi-doze-lbm-command",
@@ -2074,6 +2075,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-dispparam-60hz-dc-crc-setting-command-state",
 	"qcom,mdss-dsi-dispparam-120hz-dc-crc-setting-command-state",
 	"qcom,mdss-dsi-dispparam-bc-120hz-command-state",
+	"qcom,mdss-dsi-dispparam-bc-90hz-command-state",
 	"qcom,mdss-dsi-dispparam-bc-60hz-command-state",
 	"qcom,mdss-dsi-doze-hbm-command-state",
 	"qcom,mdss-dsi-doze-lbm-command-state",
@@ -4883,12 +4885,18 @@ int panel_disp_param_send_lock(struct dsi_panel *panel, int param)
 		pr_info("BC 120hz\n");
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_120HZ);
 		break;
-	case DISPPARAM_BC_60HZ:
-		pr_info("BC 60hz\n");
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
-		break;
 	default:
 		break;
+	}
+
+	temp = param & 0x000F0000;
+	if (temp == DISPPARAM_BC_60HZ) {
+		pr_info("BC 60hz\n");
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_60HZ);
+	} else if (temp == DISPPARAM_BC_90HZ) {
+		pr_info("BC 90hz\n");
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_90HZ);
+	} else {
 	}
 
 	temp = param & 0x00F00000;
@@ -5197,6 +5205,14 @@ int dsi_panel_enable(struct dsi_panel *panel)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_BC_120HZ cmd, rc=%d\n",
 					panel->name, rc);
 	}
+
+	if (panel->cur_mode->timing.refresh_rate == 90) {
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_BC_90HZ);
+	if (rc)
+		pr_err("[%s] failed to send DSI_CMD_SET_DISP_BC_90HZ cmd, rc=%d\n",
+					panel->name, rc);
+	}
+
 
 	panel->hbm_enabled = false;
 	panel->in_aod = false;

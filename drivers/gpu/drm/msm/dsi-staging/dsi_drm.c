@@ -1248,6 +1248,9 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 		if (adj_mode.timing.refresh_rate == 120)
 			dsi_display_panel_gamma_mode_change(display, &adj_mode);
 
+		if (adj_mode.timing.refresh_rate == 90)
+			dsi_display_panel_gamma_mode_change(display, &adj_mode);
+
 		c_bridge->dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_VRR;
 	}
 
