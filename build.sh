@@ -49,10 +49,8 @@ export PATH="$PWD/clang/bin/:$PATH"
 export KBUILD_COMPILER_STRING="$($PWD/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
 
 if [ "$local" = true ]; then
-	echo "Local build, disabling LTO and not cloning telegram.sh.."
+	echo "\nLocal build, disabling LTO..\n"
 	patch -p1 < local-build.patch
-else
-	git clone --depth=1 https://github.com/fabianonline/telegram.sh.git telegram
 fi
 
 if [ "$clean" = true ]; then
@@ -104,7 +102,7 @@ if [ "$oss_only" = true ]; then
 		   head=$(git rev-parse --verify HEAD 2>/dev/null); then
 		        HASH="$(echo $head | cut -c1-8)"
 		fi
-		./telegram/telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH !!WARNING!! OSS Only build!"
+		./telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH !!WARNING!! OSS Only build!"
 	fi
 	echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
 	echo "Zip: $ZIPNAME"
@@ -169,5 +167,5 @@ if test -z "$(git rev-parse --show-cdup 2>/dev/null)" &&
 fi
 
 if [ "$local" = false ]; then
-	./telegram/telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
+	./telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH"
 fi
