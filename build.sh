@@ -102,7 +102,7 @@ if [ "$oss_only" = true ]; then
 		   head=$(git rev-parse --verify HEAD 2>/dev/null); then
 		        HASH="$(echo $head | cut -c1-8)"
 		fi
-		./telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH !!WARNING!! OSS Only build!"
+		./telegram -f $ZIPNAME -C "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) ! Latest commit: $HASH !!WARNING!! 1 DTBO Only build!"
 	fi
 	echo -e "\nCompleted in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !"
 	echo "Zip: $ZIPNAME"
