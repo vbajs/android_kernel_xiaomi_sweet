@@ -78,23 +78,43 @@ if [ ! -f "$kernel" ] || [ ! -f "$dtbo" ] || [ ! -f "$dtb" ]; then
 	exit 1
 fi
 
-echo "\nDone compiling KSU, now compiling with disabled KSU..\n"
+echo -e "\n Done compiling KSU, now compiling with disabled KSU.."
+mkdir ./out/arch/arm64/boot/ksu/
+cp $kernel out/arch/arm64/boot/ksu/Image.gz
+ksuboot="out/arch/arm64/boot/ksu/Image.gz"
+rm -rf $kernel
+patch -p1 < disable_ksu.patch
+make O=out ARCH=arm64 vendor/sweet_defconfig
+make -j$(nproc --all) \
+    O=out \
+    ARCH=arm64 \
+    LLVM=1 \
+    LLVM_IAS=1 \
+    CROSS_COMPILE=aarch64-linux-gnu- \
+    CROSS_COMPILE_COMPAT=arm-linux-gnueabi
 
-
+if [ ! -f "$kernel" ]; then
+	echo -e "\nCompilation failed!"
+	exit 1
+fi
 
 if [ "$oss_only" = true ]; then
 	echo -e "\nNot compiling other DTBO..."
 	echo -e "\nKernel compiled successfully! Zipping up...\n"
+	mkdir ./out/arch/arm64/boot/nsu
+	cp $kernel out/arch/arm64/boot/nsu/Image.gz
+	nsuboot="out/arch/arm64/boot/nsu/Image.gz"
 	if [ -d "$AK3_DIR" ]; then
 		cp -r $AK3_DIR AnyKernel3
 	else
-		if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b fiqri AnyKernel3; then
+		if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b newmagic AnyKernel3; then
 			echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 			exit 1
 		fi
 	fi
-	sed -i "s/supported\.versions=.*/supported.versions=11-14/" Anykernel3/anykernel.sh
-	cp $kernel AnyKernel3
+	sed -i "s/supported\.versions=.*/supported.versions=11-14/" AnyKernel3/anykernel.sh
+	cp $ksuboot AnyKernel3/boot/ksu
+	cp $nsuboot AnyKernel3/boot/nsu
 	cp $dtbo AnyKernel3
 	cp $dtb AnyKernel3
 	cd AnyKernel3
@@ -138,17 +158,22 @@ echo -e "\nKernel compiled successfully! Zipping up...\n"
 mkdir ./out/arch/arm64/boot/miui/
 cp $dtbo out/arch/arm64/boot/miui/dtbo.img
 miuidtbo="out/arch/arm64/boot/miui/dtbo.img"
+mkdir ./out/arch/arm64/boot/nsu
+cp $kernel out/arch/arm64/boot/nsu/Image.gz
+nsuboot="out/arch/arm64/boot/nsu/Image.gz"
+
 
 if [ -d "$AK3_DIR" ]; then
 	cp -r $AK3_DIR AnyKernel3
 else
-	if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b exp-fiqri AnyKernel3; then
+	if ! git clone -q https://github.com/vbajs/AnyKernel3.git -b nwmd AnyKernel3; then
 		echo -e "\nAnyKernel3 repo not found locally and couldn't clone from GitHub! Aborting..."
 		exit 1
 	fi
 fi
 
-cp $kernel AnyKernel3
+cp $ksuboot AnyKernel3/boot/ksu
+cp $nsuboot AnyKernel3/boot/nsu
 cp $ossdtbo AnyKernel3/dtbo/oss
 cp $miuidtbo AnyKernel3/dtbo/miui
 cp $dtb AnyKernel3
