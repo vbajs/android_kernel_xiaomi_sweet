@@ -6,7 +6,8 @@
 # Initialize flags for options
 clean=false
 local=false
-oss_only=false
+# oss_only=false
+oss_only=true
 
 # Use getopt for parsing long and short options
 while [[ $# -gt 0 ]]; do
@@ -32,7 +33,7 @@ done
 
 SECONDS=0 # builtin bash timer
 
-ZIPNAME="STRIX-sweet-revival-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="[MIUI][11-13]STRIX-sweet-revival-$(date '+%Y%m%d').zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=vbajs
@@ -49,7 +50,7 @@ export PATH="$PWD/clang/bin/:$PATH"
 export KBUILD_COMPILER_STRING="$($PWD/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
 
 if [ "$local" = true ]; then
-	echo "\nLocal build, disabling LTO..\n"
+	echo -e "\nLocal build, disabling LTO...\n"
 	patch -p1 < local-build.patch
 fi
 
@@ -77,8 +78,12 @@ if [ ! -f "$kernel" ] || [ ! -f "$dtbo" ] || [ ! -f "$dtb" ]; then
 	exit 1
 fi
 
+echo "\nDone compiling KSU, now compiling with disabled KSU..\n"
+
+
+
 if [ "$oss_only" = true ]; then
-	echo -e "\nNot compiling MIUI dimensions..."
+	echo -e "\nNot compiling other DTBO..."
 	echo -e "\nKernel compiled successfully! Zipping up...\n"
 	if [ -d "$AK3_DIR" ]; then
 		cp -r $AK3_DIR AnyKernel3
@@ -88,6 +93,7 @@ if [ "$oss_only" = true ]; then
 			exit 1
 		fi
 	fi
+	sed -i "s/supported\.versions=.*/supported.versions=11-14/" Anykernel3/anykernel.sh
 	cp $kernel AnyKernel3
 	cp $dtbo AnyKernel3
 	cp $dtb AnyKernel3
@@ -141,10 +147,6 @@ else
 		exit 1
 	fi
 fi
-
-# Modify anykernel.sh to replace device names
-sed -i "s/device\.name1=.*/device.name1=sweet/" AnyKernel3/anykernel.sh
-sed -i "s/device\.name2=.*/device.name2=sweetin/" AnyKernel3/anykernel.sh
 
 cp $kernel AnyKernel3
 cp $ossdtbo AnyKernel3/dtbo/oss
