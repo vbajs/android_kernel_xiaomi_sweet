@@ -6,7 +6,8 @@
 # Initialize flags for options
 clean=false
 local=false
-oss_only=false
+# oss_only=false
+oss_only=true
 
 # Use getopt for parsing long and short options
 while [[ $# -gt 0 ]]; do
@@ -32,7 +33,7 @@ done
 
 SECONDS=0 # builtin bash timer
 
-ZIPNAME="STRIX-sweet-revival-$(date '+%Y%m%d-%H%M').zip"
+ZIPNAME="[enAOSP]STRIX-sweet-revival-$(date '+%Y%m%d').zip"
 
 export ARCH=arm64
 export KBUILD_BUILD_USER=vbajs
@@ -76,6 +77,10 @@ if [ ! -f "$kernel" ] || [ ! -f "$dtbo" ] || [ ! -f "$dtb" ]; then
 	echo -e "\nCompilation failed!"
 	exit 1
 fi
+
+echo "\nDone compiling KSU, now compiling with disabled KSU..\n"
+
+
 
 if [ "$oss_only" = true ]; then
 	echo -e "\nNot compiling MIUI dimensions..."
