@@ -192,6 +192,7 @@ struct bq2597x {
 	int  bus_temp;
 	int  die_temp;
 	int  bus_error_status;
+	int  sc8551_charge_mode;
 };
 
 struct sw_charger {
