@@ -40,8 +40,8 @@ export KBUILD_BUILD_USER=vbajs
 export KBUILD_BUILD_HOST=tbyool
 
 if [ ! -d "$PWD/clang" ]; then
-	aria2c -k 1M -s 8 -x 8 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r530567.tar.gz
-	mkdir clang && tar -xvf clang-r530567.tar.gz -C clang && rm -rf clang-530567.tar.gz
+	wget "$(curl -s https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt)" -O "zyc-clang.tar.gz"
+	mkdir clang && tar -xvf zyc-clang.tar.gz -C clang && rm -rf zyc-clang.tar.gz
 else
 	echo "Local clang dir found, will not download clang and using that instead"
 fi
