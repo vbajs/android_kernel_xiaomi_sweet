@@ -42,7 +42,7 @@ static int ea_panel_send_pcc(u32 bl_lvl)
 	u32 ea_coeff;
 	uint64_t val;
 
- 	display = get_main_display();
+ 	display = get_primary_display();
 	crtc = display->drm_conn->state->crtc;
 	if (!crtc) {
 		pr_err("ERROR: Cannot find display panel with CRTC\n");
@@ -115,9 +115,12 @@ u32 ea_panel_calc_backlight(u32 bl_lvl)
 {
 	last_level = bl_lvl;
 
-	if (pcc_backlight_enable && bl_lvl != 0 && bl_lvl < ELVSS_OFF_THRESHOLD)
+	if (pcc_backlight_enable && bl_lvl != 0 && bl_lvl < ELVSS_OFF_THRESHOLD) {
 		if (ea_panel_send_pcc(bl_lvl))
 			pr_err("ERROR: Failed to send PCC\n");
 
-	return bl_lvl;
+		return ELVSS_OFF_THRESHOLD;
+	} else {
+		return bl_lvl;
+	}
 }
