@@ -53,11 +53,11 @@ msm_drm-y := \
 	sde/sde_hw_ad4.o \
 	sde_edid_parser.o \
 	sde_hdcp_1x.o \
-	sde_hdcp_2x.o
+	sde_hdcp_2x.o \
+	xiaomi_frame_stat.o
 
 msm_drm-$(CONFIG_DEBUG_FS) += sde_dbg.o \
 	sde_dbg_evtlog.o \
-	xiaomi_frame_stat.o
 
 msm_drm-$(CONFIG_DRM_MSM_HDMI) += hdmi/hdmi.o \
 	hdmi/hdmi_audio.o \
