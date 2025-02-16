@@ -2,6 +2,7 @@
 #ifndef __BQ2597X_HEADER__
 #define __BQ2597X_HEADER__
 
+#define SC8551_ADC_SCALE_FACTOR 			1000
 /* Register 00h */
 #define BQ2597X_REG_00					0x00
 #define	BQ2597X_BAT_OVP_DIS_MASK			0x80
