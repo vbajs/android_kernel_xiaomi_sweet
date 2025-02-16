@@ -33,10 +33,12 @@
 #include <linux/atomic.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
-#include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#ifndef FPC_DRM_INTERFACE_WA
+#include <linux/msm_drm_notify.h>
+#endif
 #include <linux/mutex.h>
 #include <linux/of.h>
 #include <linux/of_gpio.h>
@@ -47,12 +49,11 @@
 #include <linux/pinctrl/qcom-pinctrl.h>
 #include <drm/drm_bridge.h>
 
-#define FPC1020_NAME "fpc1020"
-
 #define FPC_GPIO_NO_DEFAULT -1
 #define FPC_GPIO_NO_DEFINED -2
 #define FPC_GPIO_REQUEST_FAIL -3
 #define FPC_TTW_HOLD_TIME 2000
+#define FP_UNLOCK_REJECTION_TIMEOUT (FPC_TTW_HOLD_TIME - 500)
 
 #define RESET_LOW_SLEEP_MIN_US 5000
 #define RESET_LOW_SLEEP_MAX_US (RESET_LOW_SLEEP_MIN_US + 100)
@@ -91,11 +92,7 @@ static struct vreg_config vreg_conf[] = {
 	/*{ "vdd_io", 1800000UL, 1800000UL, 6000, }, */
 };
 
-#ifdef CONFIG_MACH_XIAOMI_SWEET
-static int power_cfg = 1;
-#else
 static int power_cfg = 0;
-#endif
 
 struct fpc1020_data {
 	struct device *dev;
@@ -122,10 +119,14 @@ struct fpc1020_data {
 
 	atomic_t wakeup_enabled;	/* Used both in ISR and non-ISR */
 	int irqf;
+#ifndef FPC_DRM_INTERFACE_WA
+	struct notifier_block notifier;
+#endif
 	bool fb_black;
 	bool wait_finger_down;
-
-	struct input_handler input_handler;
+#ifndef FPC_DRM_INTERFACE_WA
+	struct work_struct work;
+#endif
 };
 
 static int reset_gpio_res(struct fpc1020_data *fpc1020);
@@ -775,7 +776,7 @@ static ssize_t fingerdown_wait_set(struct device *dev,
 {
 	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
 
-	dev_dbg(fpc1020->dev, "%s -> %s\n", __func__, buf);
+	dev_info(fpc1020->dev, "%s -> %s\n", __func__, buf);
 	if (!strncmp(buf, "enable", strlen("enable")) && fpc1020->prepared)
 		fpc1020->wait_finger_down = true;
 	else if (!strncmp(buf, "disable", strlen("disable"))
@@ -793,7 +794,7 @@ static ssize_t vendor_update(struct device *dev,
 			     struct device_attribute *attr,
 			     const char *buf, size_t count)
 {
-	int rc = 0;
+	int rc;
 	return rc ? rc : count;
 }
 
@@ -870,62 +871,13 @@ static const struct attribute_group attribute_group = {
 	.attrs = attributes,
 };
 
-static int input_connect(struct input_handler *handler,
-		struct input_dev *dev, const struct input_device_id *id) {
-	int rc;
-	struct input_handle *handle;
-	struct fpc1020_data *fpc1020 =
-		container_of(handler, struct fpc1020_data, input_handler);
-
-	if (!strstr(dev->name, "uinput-fpc"))
-		return -ENODEV;
-
-	handle = kzalloc(sizeof(struct input_handle), GFP_KERNEL);
-	if (!handle)
-		return -ENOMEM;
-
-	handle->dev = dev;
-	handle->handler = handler;
-	handle->name = FPC1020_NAME;
-	handle->private = fpc1020;
-
-	rc = input_register_handle(handle);
-	if (rc)
-		goto err_input_register_handle;
-
-	rc = input_open_device(handle);
-	if (rc)
-		goto err_input_open_device;
-
-	return 0;
-
-err_input_open_device:
-	input_unregister_handle(handle);
-err_input_register_handle:
-	kfree(handle);
-	return rc;
-}
-
-static bool input_filter(struct input_handle *handle, unsigned int type,
-		unsigned int code, int value)
+#ifndef FPC_DRM_INTERFACE_WA
+static void notification_work(struct work_struct *work)
 {
-	return true;
+	pr_info("%s: unblank\n", __func__);
+	dsi_bridge_interface_enable(FP_UNLOCK_REJECTION_TIMEOUT);
 }
-
-static void input_disconnect(struct input_handle *handle)
-{
-	input_close_device(handle);
-	input_unregister_handle(handle);
-	kfree(handle);
-}
-
-static const struct input_device_id ids[] = {
-	{
-		.flags = INPUT_DEVICE_ID_MATCH_EVBIT,
-		.evbit = { BIT_MASK(EV_KEY) },
-	},
-	{ },
-};
+#endif
 
 static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 {
@@ -944,6 +896,9 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	if (fpc1020->wait_finger_down && fpc1020->fb_black && fpc1020->prepared) {
 		pr_info("%s enter fingerdown & fb_black then schedule_work\n", __func__);
 		fpc1020->wait_finger_down = false;
+#ifndef FPC_DRM_INTERFACE_WA
+		schedule_work(&fpc1020->work);
+#endif
 	}
 
 	return IRQ_HANDLED;
@@ -976,6 +931,45 @@ static int fpc1020_request_named_gpio(struct fpc1020_data *fpc1020,
 
 	return 0;
 }
+
+#ifndef FPC_DRM_INTERFACE_WA
+static int fpc_fb_notif_callback(struct notifier_block *nb,
+				 unsigned long val, void *data)
+{
+	struct fpc1020_data *fpc1020 = container_of(nb, struct fpc1020_data,
+						    notifier);
+	struct msm_drm_notifier *evdata = data;
+	unsigned int blank;
+
+	if (!fpc1020)
+		return 0;
+
+	if (val != MSM_DRM_EVENT_BLANK || fpc1020->prepared == false)
+		return 0;
+
+	pr_debug("[info] %s value = %d\n", __func__, (int)val);
+
+	if (evdata && evdata->data && val == MSM_DRM_EVENT_BLANK) {
+		blank = *(int *)(evdata->data);
+		switch (blank) {
+		case MSM_DRM_BLANK_POWERDOWN:
+			fpc1020->fb_black = true;
+			break;
+		case MSM_DRM_BLANK_UNBLANK:
+			fpc1020->fb_black = false;
+			break;
+		default:
+			pr_debug("%s defalut\n", __func__);
+			break;
+		}
+	}
+	return NOTIFY_OK;
+}
+
+static struct notifier_block fpc_notif_block = {
+	.notifier_call = fpc_fb_notif_callback,
+};
+#endif
 
 static int fpc1020_probe(struct platform_device *pdev)
 {
@@ -1049,17 +1043,6 @@ static int fpc1020_probe(struct platform_device *pdev)
 	if (!fpc1020->ttw_wl)
 		return -ENOMEM;
 
-	fpc1020->input_handler.filter = input_filter;
-	fpc1020->input_handler.connect = input_connect;
-	fpc1020->input_handler.disconnect = input_disconnect;
-	fpc1020->input_handler.name = FPC1020_NAME;
-	fpc1020->input_handler.id_table = ids;
-	rc = input_register_handler(&fpc1020->input_handler);
-	if (rc) {
-		dev_err(dev, "failed to register key handler\n");
-		goto exit;
-	}
-
 	rc = sysfs_create_group(&dev->kobj, &attribute_group);
 	if (rc) {
 		dev_err(dev, "fpc could not create sysfs\n");
@@ -1080,6 +1063,13 @@ static int fpc1020_probe(struct platform_device *pdev)
 
 	fpc1020->fb_black = false;
 	fpc1020->wait_finger_down = false;
+#ifndef FPC_DRM_INTERFACE_WA
+	INIT_WORK(&fpc1020->work, notification_work);
+	fpc1020->notifier = fpc_notif_block;
+	msm_drm_register_client(&fpc1020->notifier);
+#endif
+
+	//rc = hw_reset(fpc1020);
 
 	dev_info(dev, "%s: ok\n", __func__);
 
@@ -1092,6 +1082,9 @@ static int fpc1020_remove(struct platform_device *pdev)
 {
 	struct fpc1020_data *fpc1020 = platform_get_drvdata(pdev);
 
+#ifndef FPC_DRM_INTERFACE_WA
+	msm_drm_unregister_client(&fpc1020->notifier);
+#endif
 	sysfs_remove_group(&pdev->dev.kobj, &attribute_group);
 	mutex_destroy(&fpc1020->lock);
 	wakeup_source_unregister(fpc1020->ttw_wl);
@@ -1115,11 +1108,10 @@ MODULE_DEVICE_TABLE(of, fpc1020_of_match);
 
 static struct platform_driver fpc1020_driver = {
 	.driver = {
-		   .name = FPC1020_NAME,
+		   .name = "fpc1020",
 		   .owner = THIS_MODULE,
 		   .of_match_table = fpc1020_of_match,
-		   .probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
+		   },
 	.probe = fpc1020_probe,
 	.remove = fpc1020_remove,
 };
