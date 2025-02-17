@@ -1,0 +1,20 @@
+version: 2.1
+jobs:
+  compile:
+   docker:
+      - image: ubuntu:22.04
+   steps:
+      - run:
+          no_output_timeout: 50m
+          command: |
+            apt update && apt upgrade -y
+            apt install bc build-essential bison flex zip gcc clang libc6 curl libstdc++6 git wget aria2 libssl-dev zstd lld openjdk-11-jdk llvm openjdk-11-jre -y
+            git clone --recursive https://github.com/vbajs/android_kernel_xiaomi_sweet.git -b ${CIRCLE_BRANCH} --depth=1 sweet
+            cd sweet
+            wget https://raw.githubusercontent.com/fabianonline/telegram.sh/refs/heads/master/telegram && chmod +x ./telegram
+            bash build.sh
+workflows:
+  version: 2.1
+  cooking:
+    jobs:
+      - compile
