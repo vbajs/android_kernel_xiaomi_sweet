@@ -1987,12 +1987,8 @@ bfq_setup_cooperator(struct bfq_data *bfqd, struct bfq_queue *bfqq,
 {
 	struct bfq_queue *in_service_bfqq, *new_bfqq;
 
-	new_bfqq = bfqq->new_bfqq;
-	if (new_bfqq) {
-		while (new_bfqq->new_bfqq)
-			new_bfqq = new_bfqq->new_bfqq;
-		return new_bfqq;
-	}
+	if (bfqq->new_bfqq)
+		return bfqq->new_bfqq;
 
 	if (!io_struct ||
 	    wr_from_too_long(bfqq) ||
@@ -4409,7 +4405,7 @@ bfq_split_bfqq(struct bfq_io_cq *bic, struct bfq_queue *bfqq)
 {
 	bfq_log_bfqq(bfqq->bfqd, bfqq, "splitting queue");
 
-	if (bfqq_process_refs(bfqq) == 1 && !bfqq->new_bfqq) {
+	if (bfqq_process_refs(bfqq) == 1) {
 		bfqq->pid = current->pid;
 		bfq_clear_bfqq_coop(bfqq);
 		bfq_clear_bfqq_split_coop(bfqq);
@@ -4528,8 +4524,7 @@ static void bfq_prepare_request(struct request *rq, struct bio *bio)
 	 * addition, if the queue has also just been split, we have to
 	 * resume its state.
 	 */
-	if (likely(bfqq != &bfqd->oom_bfqq) && !bfqq->new_bfqq &&
-	    bfqq_process_refs(bfqq) == 1) {
+	if (likely(bfqq != &bfqd->oom_bfqq) && bfqq_process_refs(bfqq) == 1) {
 		bfqq->bic = bic;
 		if (split) {
 			/*
