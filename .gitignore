@@ -140,3 +140,9 @@ out/
 # Ignore KernelSU folders
 KernelSU/
 drivers/kernelsu
+
+# Ignore our scripts
+build.sh
+build.log
+regen.sh
+merge_tags.py
