@@ -69,28 +69,28 @@ enum {
 	ADC_MAX_NUM,
 };
 
-static float sc8551_adc_lsb[] = {
-	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB,
-	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB,
-	[ADC_VAC]	= SC8551_VAC_ADC_LSB,
-	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB,
-	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB,
-	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB,
-	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB,
-	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB,
-	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB,
+static const u16 sc8551_adc_lsb[] = {
+	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VAC]	= SC8551_VAC_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
 };
 
-static float sc8551_adc_lsb_non_calibrate[] = {
-	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB,
-	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB,
-	[ADC_VAC]	= SC8551_VAC_ADC_LSB,
-	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB,
-	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB_NON_CALIBRATE,
-	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB,
-	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB,
-	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB,
-	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB,
+static const u16 sc8551_adc_lsb_non_calibrate[] = {
+	[ADC_IBUS]	= SC8551_IBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VBUS]	= SC8551_VBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VAC]	= SC8551_VAC_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VOUT]	= SC8551_VOUT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_VBAT]	= SC8551_VBAT_ADC_LSB_NON_CALIBRATE * SC8551_ADC_SCALE_FACTOR,
+	[ADC_IBAT]	= SC8551_IBAT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TBUS]	= SC8551_TSBUS_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TBAT]	= SC8551_TSBAT_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
+	[ADC_TDIE]	= SC8551_TDIE_ADC_LSB * SC8551_ADC_SCALE_FACTOR,
 };
 
 #define BQ25970_ROLE_STDALONE   0
@@ -483,7 +483,6 @@ static int bq2597x_enable_charge(struct bq2597x *bq, bool enable)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_charge);
 
 static int bq2597x_check_charge_enabled(struct bq2597x *bq, bool *enabled)
 {
@@ -512,33 +511,6 @@ static int bq2597x_enable_wdt(struct bq2597x *bq, bool enable)
 				BQ2597X_WATCHDOG_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_wdt);
-
-#if 0
-static int bq2597x_set_wdt(struct bq2597x *bq, int ms)
-{
-	int ret;
-	u8 val;
-
-	if (ms == 500)
-		val = BQ2597X_WATCHDOG_0P5S;
-	else if (ms == 1000)
-		val = BQ2597X_WATCHDOG_1S;
-	else if (ms == 5000)
-		val = BQ2597X_WATCHDOG_5S;
-	else if (ms == 30000)
-		val = BQ2597X_WATCHDOG_30S;
-	else
-		val = BQ2597X_WATCHDOG_30S;
-
-	val <<= BQ2597X_WATCHDOG_SHIFT;
-
-	ret = bq2597x_update_bits(bq, BQ2597X_REG_0B,
-				BQ2597X_WATCHDOG_MASK, val);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(bq2597x_set_wdt);
-#endif
 
 static int bq2597x_enable_batovp(struct bq2597x *bq, bool enable)
 {
@@ -556,7 +528,6 @@ static int bq2597x_enable_batovp(struct bq2597x *bq, bool enable)
 				BQ2597X_BAT_OVP_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_batovp);
 
 static int bq2597x_set_batovp_th(struct bq2597x *bq, int threshold)
 {
@@ -579,7 +550,6 @@ static int bq2597x_set_batovp_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BAT_OVP_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_batovp_th);
 
 static int bq2597x_enable_batovp_alarm(struct bq2597x *bq, bool enable)
 {
@@ -597,7 +567,6 @@ static int bq2597x_enable_batovp_alarm(struct bq2597x *bq, bool enable)
 				BQ2597X_BAT_OVP_ALM_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_batovp_alarm);
 
 static int bq2597x_set_batovp_alarm_th(struct bq2597x *bq, int threshold)
 {
@@ -615,7 +584,6 @@ static int bq2597x_set_batovp_alarm_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BAT_OVP_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_batovp_alarm_th);
 
 static int bq2597x_enable_batocp(struct bq2597x *bq, bool enable)
 {
@@ -633,7 +601,6 @@ static int bq2597x_enable_batocp(struct bq2597x *bq, bool enable)
 				BQ2597X_BAT_OCP_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_batocp);
 
 static int bq2597x_set_batocp_th(struct bq2597x *bq, int threshold)
 {
@@ -651,7 +618,6 @@ static int bq2597x_set_batocp_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BAT_OCP_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_batocp_th);
 
 static int bq2597x_enable_batocp_alarm(struct bq2597x *bq, bool enable)
 {
@@ -669,7 +635,6 @@ static int bq2597x_enable_batocp_alarm(struct bq2597x *bq, bool enable)
 				BQ2597X_BAT_OCP_ALM_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_batocp_alarm);
 
 static int bq2597x_set_batocp_alarm_th(struct bq2597x *bq, int threshold)
 {
@@ -687,8 +652,6 @@ static int bq2597x_set_batocp_alarm_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BAT_OCP_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_batocp_alarm_th);
-
 
 static int bq2597x_set_busovp_th(struct bq2597x *bq, int threshold)
 {
@@ -706,7 +669,6 @@ static int bq2597x_set_busovp_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BUS_OVP_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_busovp_th);
 
 static int bq2597x_enable_busovp_alarm(struct bq2597x *bq, bool enable)
 {
@@ -724,7 +686,6 @@ static int bq2597x_enable_busovp_alarm(struct bq2597x *bq, bool enable)
 				BQ2597X_BUS_OVP_ALM_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_busovp_alarm);
 
 static int bq2597x_set_busovp_alarm_th(struct bq2597x *bq, int threshold)
 {
@@ -742,7 +703,6 @@ static int bq2597x_set_busovp_alarm_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BUS_OVP_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_busovp_alarm_th);
 
 static int bq2597x_enable_busocp(struct bq2597x *bq, bool enable)
 {
@@ -760,8 +720,6 @@ static int bq2597x_enable_busocp(struct bq2597x *bq, bool enable)
 				BQ2597X_BUS_OCP_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_busocp);
-
 
 static int bq2597x_set_busocp_th(struct bq2597x *bq, int threshold)
 {
@@ -779,7 +737,6 @@ static int bq2597x_set_busocp_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BUS_OCP_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_busocp_th);
 
 static int bq2597x_enable_busocp_alarm(struct bq2597x *bq, bool enable)
 {
@@ -797,7 +754,6 @@ static int bq2597x_enable_busocp_alarm(struct bq2597x *bq, bool enable)
 				BQ2597X_BUS_OCP_ALM_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_busocp_alarm);
 
 static int bq2597x_set_busocp_alarm_th(struct bq2597x *bq, int threshold)
 {
@@ -815,7 +771,6 @@ static int bq2597x_set_busocp_alarm_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BUS_OCP_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_busocp_alarm_th);
 
 static int bq2597x_enable_batucp_alarm(struct bq2597x *bq, bool enable)
 {
@@ -833,7 +788,6 @@ static int bq2597x_enable_batucp_alarm(struct bq2597x *bq, bool enable)
 				BQ2597X_BAT_UCP_ALM_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_batucp_alarm);
 
 static int bq2597x_set_batucp_alarm_th(struct bq2597x *bq, int threshold)
 {
@@ -851,7 +805,6 @@ static int bq2597x_set_batucp_alarm_th(struct bq2597x *bq, int threshold)
 				BQ2597X_BAT_UCP_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_batucp_alarm_th);
 
 static int bq2597x_set_acovp_th(struct bq2597x *bq, int threshold)
 {
@@ -874,7 +827,6 @@ static int bq2597x_set_acovp_th(struct bq2597x *bq, int threshold)
 	return ret;
 
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_acovp_th);
 
 static int bq2597x_set_vdrop_th(struct bq2597x *bq, int threshold)
 {
@@ -929,7 +881,6 @@ static int bq2597x_enable_bat_therm(struct bq2597x *bq, bool enable)
 				BQ2597X_TSBAT_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_bat_therm);
 
 /*
  * the input threshold is the raw value that would write to register directly.
@@ -941,7 +892,6 @@ static int bq2597x_set_bat_therm_th(struct bq2597x *bq, u8 threshold)
 	ret = bq2597x_write_byte(bq, BQ2597X_REG_29, threshold);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_bat_therm_th);
 
 static int bq2597x_enable_bus_therm(struct bq2597x *bq, bool enable)
 {
@@ -959,7 +909,6 @@ static int bq2597x_enable_bus_therm(struct bq2597x *bq, bool enable)
 				BQ2597X_TSBUS_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_bus_therm);
 
 /*
  * the input threshold is the raw value that would write to register directly.
@@ -971,8 +920,6 @@ static int bq2597x_set_bus_therm_th(struct bq2597x *bq, u8 threshold)
 	ret = bq2597x_write_byte(bq, BQ2597X_REG_28, threshold);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_bus_therm_th);
-
 
 static int bq2597x_enable_die_therm(struct bq2597x *bq, bool enable)
 {
@@ -990,7 +937,6 @@ static int bq2597x_enable_die_therm(struct bq2597x *bq, bool enable)
 				BQ2597X_TDIE_DIS_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_die_therm);
 
 /*
  * please be noted that the unit here is degC
@@ -1008,7 +954,6 @@ static int bq2597x_set_die_therm_th(struct bq2597x *bq, u8 threshold)
 				BQ2597X_TDIE_ALM_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_die_therm_th);
 
 static int bq2597x_enable_adc(struct bq2597x *bq, bool enable)
 {
@@ -1026,7 +971,6 @@ static int bq2597x_enable_adc(struct bq2597x *bq, bool enable)
 				BQ2597X_ADC_EN_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_enable_adc);
 
 static int bq2597x_set_adc_average(struct bq2597x *bq, bool avg)
 {
@@ -1044,7 +988,6 @@ static int bq2597x_set_adc_average(struct bq2597x *bq, bool avg)
 				BQ2597X_ADC_AVG_MASK, val);
 	return 0;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_adc_average);
 
 static int bq2597x_set_adc_scanrate(struct bq2597x *bq, bool oneshot)
 {
@@ -1062,7 +1005,6 @@ static int bq2597x_set_adc_scanrate(struct bq2597x *bq, bool oneshot)
 				BQ2597X_ADC_EN_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_adc_scanrate);
 
 static int bq2597x_set_adc_bits(struct bq2597x *bq, int bits)
 {
@@ -1081,12 +1023,12 @@ static int bq2597x_set_adc_bits(struct bq2597x *bq, int bits)
 				BQ2597X_ADC_SAMPLE_MASK, val);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_adc_bits);
 
 #define ADC_REG_BASE 0x16
 static int bq2597x_get_adc_data(struct bq2597x *bq, int channel,  int *result)
 {
 	int ret;
+	const u16 *lsb_table;
 	u16 val;
 	s16 t;
 
@@ -1096,23 +1038,20 @@ static int bq2597x_get_adc_data(struct bq2597x *bq, int channel,  int *result)
 	ret = bq2597x_read_word(bq, ADC_REG_BASE + (channel << 1), &val);
 	if (ret < 0)
 		return ret;
-	t = val & 0xFF;
-	t <<= 8;
-	t |= (val >> 8) & 0xFF;
-	*result = t;
+
+	t = (s16)((val << 8) | (val >> 8));
 
 	if (bq->chip_vendor == SC8551) {
-		kernel_neon_begin();
-		if (bq->mass_production)
-			*result = (int)(t * sc8551_adc_lsb_non_calibrate[channel]);
-		else
-			*result = (int)(t * sc8551_adc_lsb[channel]);
-		kernel_neon_end();
+		lsb_table = bq->mass_production ?
+			sc8551_adc_lsb_non_calibrate : sc8551_adc_lsb;
+
+		*result = div_s64((s64)t * lsb_table[channel], SC8551_ADC_SCALE_FACTOR);
+	} else {
+		*result = t;
 	}
 
 	return 0;
 }
-EXPORT_SYMBOL_GPL(bq2597x_get_adc_data);
 
 static int sc8551_optimize_adc(struct bq2597x *bq)
 {
@@ -1171,26 +1110,6 @@ static int bq2597x_set_alarm_int_mask(struct bq2597x *bq, u8 mask)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_alarm_int_mask);
-
-#if 0
-static int bq2597x_clear_alarm_int_mask(struct bq2597x *bq, u8 mask)
-{
-	int ret;
-	u8 val;
-
-	ret = bq2597x_read_byte(bq, BQ2597X_REG_0F, &val);
-	if (ret)
-		return ret;
-
-	val &= ~mask;
-
-	ret = bq2597x_write_byte(bq, BQ2597X_REG_0F, val);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(bq2597x_clear_alarm_int_mask);
-#endif
 
 static int bq2597x_set_fault_int_mask(struct bq2597x *bq, u8 mask)
 {
@@ -1207,26 +1126,6 @@ static int bq2597x_set_fault_int_mask(struct bq2597x *bq, u8 mask)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(bq2597x_set_fault_int_mask);
-
-#if 0
-static int bq2597x_clear_fault_int_mask(struct bq2597x *bq, u8 mask)
-{
-	int ret;
-	u8 val;
-
-	ret = bq2597x_read_byte(bq, BQ2597X_REG_12, &val);
-	if (ret)
-		return ret;
-
-	val &= ~mask;
-
-	ret = bq2597x_write_byte(bq, BQ2597X_REG_12, val);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(bq2597x_clear_fault_int_mask);
-#endif
 
 static int sc8551_set_bypass_mode_en(struct bq2597x *bq, int enable)
 {
@@ -1272,7 +1171,6 @@ static int sc8551_set_charge_mode(struct bq2597x *bq, int mode)
 
 	return ret;
 }
-EXPORT_SYMBOL_GPL(sc8551_set_charge_mode);
 
 static int sc8551_get_charge_mode(struct bq2597x *bq)
 {
@@ -1286,7 +1184,6 @@ static int sc8551_get_charge_mode(struct bq2597x *bq)
 
 	return (int)(val & SC8551_CHARGE_MODE_MASK);
 }
-EXPORT_SYMBOL_GPL(sc8551_get_charge_mode);
 
 static int bq2597x_set_sense_resistor(struct bq2597x *bq, int r_mohm)
 {
@@ -2249,8 +2146,6 @@ static void bq2597x_dump_reg(struct bq2597x *bq)
 		}
 	}
 }
-EXPORT_SYMBOL_GPL(bq2597x_dump_reg);
-
 
 static void bq2597x_check_alarm_status(struct bq2597x *bq)
 {
