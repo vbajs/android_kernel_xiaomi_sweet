@@ -1159,6 +1159,8 @@ void cp_statemachine(unsigned int port)
 
 static void cp_workfunc(struct work_struct *work)
 {
+	struct power_supply *onsemi_psy;
+
 	cp_get_usb_type();
 
 	cp_update_sw_status();
