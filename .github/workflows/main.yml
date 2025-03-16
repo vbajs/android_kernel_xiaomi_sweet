@@ -1,0 +1,74 @@
+name: build kernel [MIUI]
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Prepare timezone 
+      run: |
+            echo "BUILD_TIME=$(TZ=Asia/Jakarta date "+%d%m%Y-%H%M")" >> $GITHUB_ENV
+            sudo rm /etc/localtime
+            sudo ln -s /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+        
+    - name: Install Dependencies
+      run: |
+          sudo apt update
+          sudo apt install -y build-essential libncurses-dev bison flex libssl-dev bc git
+
+    - name: Fetch Clang
+      run: |  
+            mkdir clang && curl  https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz -RLO && tar -C clang/ -xf clang-*.tar.gz
+
+    - name: Fetch Gcc
+      run: |
+           git clone https://github.com/greenforce-project/gcc-arm64 -b main --depth=1 gcc64
+           git clone https://github.com/greenforce-project/gcc-arm -b main --depth=1 gcc32
+           
+    - name: Clean previous build
+      run: |
+           make clean && make mrproper
+                 
+    - name: MIUI Dimensi
+      run: |
+            sed -i 's/qcom,mdss-pan-physical-width-dimension = <69>;$/qcom,mdss-pan-physical-width-dimension = <695>;/' arch/arm64/boot/dts/qcom/xiaomi/sweet/dsi-panel-k6-38-0c-0a-fhd-dsc-video.dtsi
+            sed -i 's/qcom,mdss-pan-physical-height-dimension = <154>;$/qcom,mdss-pan-physical-height-dimension = <1546>;/' arch/arm64/boot/dts/qcom/xiaomi/sweet/dsi-panel-k6-38-0c-0a-fhd-dsc-video.dtsi
+                 
+    - name: Build Kernol
+      run: |
+           export ARCH=arm64
+           export PATH="${PWD}/clang/bin:${PWD}gcc64/bin:${PWD}gcc32/bin:$PATH"  
+           export KBUILD_BUILD_USER=nobody
+           export KBUILD_BUILD_HOST=android-build
+           export KBUILD_COMPILER_STRING="${PWD}/clang"
+           make O=out sweet_defconfig 
+           make -j$(nproc --all) O=out \ ARCH=arm64 \ LLVM=1 \ LLVM_IAS=1 \ CLANG_TRIPLE=aarch64-linux-gnu- \ CROSS_COMPILE=aarch64-linux-gnu- \ CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+           mv out/.config out/sweet_defconfig.txt
+           
+    - name: Upload defconfig 
+      uses: actions/upload-artifact@v4
+      with:
+        name: sweet_defconfig-${{ env.BUILD_TIME }}
+        path: out/sweet_defconfig.txt
+      
+    - name: Fetch AnyKernel3
+      run: |
+           git clone --depth=1 https://github.com/ZenKernoll/AnyKernel3.git -b main AnyKernel3  
+           if [ -f out/arch/arm64/boot/Image.gz ]; then
+            cp out/arch/arm64/boot/Image.gz AnyKernel3/Image.gz
+           fi
+           if [ -f out/arch/arm64/boot/dtbo.img ]; then
+            cp out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
+           fi           
+           if [ -f out/arch/arm64/boot/dtb.img ]; then
+            cp out/arch/arm64/boot/dtb.img AnyKernel3/dtb.img
+           fi
+        
+    - name: Upload Kernol 
+      uses: actions/upload-artifact@v4
+      with:
+        name: ZenKernoll-MIUI-${{ env.BUILD_TIME }}
+        path: AnyKernel3/*
